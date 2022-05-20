@@ -6,21 +6,22 @@ void Delay100ms(unsigned long count);
 void print_(int score);
 int main(void){
 	
-    PortF_Init();
+	  PortF_Init();
     EdgeCounter_Init();           // initialize GPIO Port F interrupt
     TExaS_Init(SSI0_Real_Nokia5110_Scope);  // set system clock to 80 MHz
     Random_Init(1);
-    ADC_Init();
+		ADC_Init();
     Nokia5110_Init();
-    vertical_pos1 = CARH, vertical_pos2 =  CARH - 24 ;
-    horizontal_pos = 32;
-    r1 = 1;
-    r2 = 3;
-    score = 0; 
+		vertical_pos1 = CARH, vertical_pos2 =  CARH - 24 ;
+		horizontal_pos = 32;
+		r1 = 1;
+		r2 = 3;
+		score = 0; 
+	
 	
   while(1){
 		
-		if((ADC0_RIS_R & (1 << 3)) == (1 << 3)){ // if third bit is set
+			if((ADC0_RIS_R & (1 << 3)) == (1 << 3)){ // if third bit is set
 			ADC0_ISC_R  |= (1<<3);  // third bit = 1
 			addData = ADC0_SSFIFO3_R;
 		}
@@ -28,51 +29,30 @@ int main(void){
 		
 		
 		
-		if(v1 > 48) x ++,r1 = rand ()%31, v1 = 0;  // for new random number and restart
-		if(v2 > 48) x ++,r2 = rand ()%31, v2 = 0;  // for new random number and restart
-			Enemies(h,v1,v2,r1,r2);
 		
-			v1 += ((x/10) + 2); 
-		  v2 += ((x/10) + 2); 
+		if(vertical_pos1 > 48) score ++,r1 = rand ()%31, vertical_pos1 = 0;  // for new random number and restart
+		if(vertical_pos2 > 48) score ++,r2 = rand ()%31, vertical_pos2 = 0;  // for new random number and restart
+			Enemies(horizontal_pos,vertical_pos1,vertical_pos2,r1,r2);
+		
+			vertical_pos1 += ((score/10) + 1); 
+		  vertical_pos2 += ((score/10) + 1); 
 			Delay100ms(1);
 		
 		
-		if(v1 > 37){
+		if(vertical_pos1 > 37){
 		
-			if ((h == 48 && r1 & (1<<1)) ||(h == 32 && r1 & (1<<2)) || (h == 16 && r1 & (1<<3)) || (h == 0 && r1 & (1<<4))|| (h == 64 && r1 & (1<<0))){
+			if ((horizontal_pos >= 60 && horizontal_pos <68 && r1 & (1<<0)) || (horizontal_pos >= 44 && horizontal_pos <52 && r1 & (1<<1)) ||(horizontal_pos >= 28 && horizontal_pos <36 && r1 & (1<<2)) || (horizontal_pos >= 12 && horizontal_pos <20 && r1 & (1<<3)) || (horizontal_pos >= 0 && horizontal_pos <8 && r1 & (1<<4))){
 				
 					//Delay100ms(10);
-					Nokia5110_Clear();
-					Nokia5110_SetCursor(2, 1);
-					Nokia5110_OutString("GAME OVER");
-					Nokia5110_SetCursor(3, 2);
-					Nokia5110_OutString("score: ");
-					Nokia5110_SetCursor(1, 3);
-					Nokia5110_OutUDec(x);
-					Nokia5110_SetCursor(3, 4);
-					Nokia5110_OutString("level: ");
-					Nokia5110_SetCursor(1, 5);
-					Nokia5110_OutUDec(x/10);
-					Delay100ms(20);
+					print_(score);
 					break;
 		}
 	}
-		else if(v2 > 37){
+		else if(vertical_pos2 > 37){
 			
-		if ((h == 48 && r2 & (1<<1)) ||(h == 32 && r2 & (1<<2)) || (h == 16 && r2 & (1<<3)) || (h == 0 && r2 & (1<<4))|| (h == 64 && r2 & (1<<0))){
+		if ((horizontal_pos >= 60 && horizontal_pos <68 && r2 & (1<<0)) || (horizontal_pos >= 44 && horizontal_pos <52 && r2 & (1<<1)) ||(horizontal_pos >= 28 && horizontal_pos <36 && r2 & (1<<2)) || (horizontal_pos >= 12 && horizontal_pos <20 && r2 & (1<<3)) || (horizontal_pos >= 0 && horizontal_pos <8 && r2 & (1<<4))){
 					//Delay100ms(10);
-					Nokia5110_Clear();
-					Nokia5110_SetCursor(2, 1);
-					Nokia5110_OutString("GAME OVER");
-					Nokia5110_SetCursor(3, 2);
-					Nokia5110_OutString("score: ");
-					Nokia5110_SetCursor(1, 3);
-					Nokia5110_OutUDec(x);
-					Nokia5110_SetCursor(3, 4);
-					Nokia5110_OutString("level: ");
-					Nokia5110_SetCursor(1, 5);
-					Nokia5110_OutUDec(x/10);
-					Delay100ms(20);
+					print_(score);
 					break;
 			}	
 		}
@@ -81,20 +61,32 @@ int main(void){
 	}
 }
 
+void print_(int score){
+					Nokia5110_Clear();
+					Nokia5110_SetCursor(2, 1);
+					Nokia5110_OutString("GAME OVER");
+					Nokia5110_SetCursor(3, 2);
+					Nokia5110_OutString("score: ");
+					Nokia5110_SetCursor(1, 3);
+					Nokia5110_OutUDec(score);
+					Nokia5110_SetCursor(3, 4);
+					Nokia5110_OutString("level: ");
+					Nokia5110_SetCursor(1, 5);
+					Nokia5110_OutUDec(score/10);
+					Delay100ms(20);
+}
 
 
 
-
-
-void GPIOPortF_Handler(void){
+/*void GPIOPortF_Handler(void){
 	
 	if ( GPIO_PORTF_RIS_R & (1 <<4) ){   /// right
 		GPIO_PORTF_ICR_R = 0x10;          
-		if(h < 4 * CARW ) h += CARW;
+		if(horizontal_pos< 4 * CARW ) h += CARW;
 }	
 	else if(GPIO_PORTF_RIS_R & (1 <<0)){     /// left
 		GPIO_PORTF_ICR_R = 0x01;
-		if(h > 0) h -= CARW;
+		if(horizontal_pos > 0) h -= CARW;
 	}
 	
 	GPIO_PORTF_DATA_R = count_;
@@ -109,9 +101,5 @@ void Delay100ms(unsigned long count){
     }
     count--;
   }
-}
-
-
-
-
+}*/
 
